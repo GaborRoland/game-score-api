@@ -1,16 +1,21 @@
 import express from "express";
+import { getScores, addScore } from "../db.js";
 
 const router = express.Router();
 
-let scores = [];
-
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const { username, score } = req.body;
-  scores.push({ username, score });
+
+  if (typeof username !== 'string' || typeof score !== 'number') {
+    return res.status(400).json({ message: 'Invalid payload' });
+  }
+
+  await addScore({ username, score, createdAt: new Date().toISOString() });
   res.json({ message: "Score saved" });
 });
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
+  const scores = await getScores();
   res.json(scores.sort((a,b) => b.score - a.score));
 });
 
