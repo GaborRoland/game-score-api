@@ -8,10 +8,13 @@
     "dev": "nodemon src/index.js"
   },
   "nodemonConfig": {
-    "watch": ["src"],
+    "watch": [
+      "src"
+    ],
     "ext": "js,json"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0"
   },

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Score Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 { text-align: center; }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+    }
+
+    button {
+      background: #4e54c8;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: white;
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Game Score Demo</h1>
+
+<input id="username" placeholder="Username">
+<input id="score" type="number" placeholder="Score">
+<button onclick="submitScore()">Submit Score</button>
+
+<h3>Leaderboard</h3>
+<ul id="leaderboard"></ul>
+
+<script>
+const API_URL = "https://game-score-api.onrender.com";
+
+async function submitScore() {
+  const username = document.getElementById("username").value;
+  const score = document.getElementById("score").value;
+
+  await fetch(`${API_URL}/api/scores`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, score })
+  });
+
+  loadScores();
+}
+
+async function loadScores() {
+  const res = await fetch(`${API_URL}/api/scores`);
+  const scores = await res.json();
+
+  const list = document.getElementById("leaderboard");
+  list.innerHTML = "";
+
+  scores.forEach(s => {
+    const li = document.createElement("li");
+    li.textContent = `${s.username}: ${s.score}`;
+    list.appendChild(li);
+  });
+}
+
+loadScores();
+</script>
+
+</body>
+</html>
