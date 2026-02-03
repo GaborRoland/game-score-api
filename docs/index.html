@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Score Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 { text-align: center; }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+    }
+
+    button {
+      background: #4e54c8;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: white;
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Game Score Demo</h1>
+
+<input id="username" placeholder="Username">
+<input id="score" type="number" placeholder="Score">
+<button id="submitBtn" onclick="submitScore()">Submit Score</button>
+<div id="status" style="display:none; padding:10px; border-radius:5px; margin-top:8px;"></div>
+
+<h3>Leaderboard</h3>
+<ul id="leaderboard"></ul>
+
+<script>
+// API path selection: allow an explicit override via `window.API_URL`, fall back to localhost during development,
+// otherwise default to the Render URL.
+const API_PATH = (function() {
+  if (window.API_URL) return window.API_URL.replace(/\/$/, '') + '/api/scores';
+  const host = location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return '/api/scores';
+  }
+  return 'https://game-score-api-ewe5.onrender.com/api/scores';
+})();
+
+function showStatus(message, ok = true) {
+  const el = document.getElementById('status');
+  el.textContent = message;
+  el.style.display = 'block';
+  el.style.background = ok ? '#d4edda' : '#f8d7da';
+  el.style.color = ok ? '#155724' : '#721c24';
+  clearTimeout(showStatus._t);
+  showStatus._t = setTimeout(() => el.style.display = 'none', 2500);
+}
+
+async function submitScore() {
+  const username = document.getElementById("username").value.trim();
+  const score = Number(document.getElementById("score").value);
+  const btn = document.getElementById('submitBtn');
+
+  if (!username || Number.isNaN(score)) {
+    showStatus('Please enter a valid username and numeric score', false);
+    return;
+  }
+
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Submitting...';
+
+  try {
+    const res = await fetch(API_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, score })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({message: 'Server error'}));
+      showStatus(err.message || 'Failed to save score', false);
+    } else {
+      showStatus('Score submitted!', true);
+      document.getElementById("username").value = '';
+      document.getElementById("score").value = '';
+      loadScores();
+    }
+  } catch (e) {
+    showStatus('Network error: ' + e.message, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+async function loadScores() {
+  try {
+    const res = await fetch(API_PATH);
+    const scores = await res.json();
+
+    const list = document.getElementById("leaderboard");
+    list.innerHTML = "";
+
+    scores.forEach(s => {
+      const li = document.createElement("li");
+      li.textContent = `${s.username}: ${s.score}`;
+      list.appendChild(li);
+    });
+  } catch (e) {
+    showStatus('Failed to load scores', false);
+  }
+}
+
+loadScores();
+</script>
+
+</body>
+</html>
